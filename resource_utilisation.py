@@ -1,11 +1,11 @@
 import re
 
 class ResourceUtilisation:
-    def __init__(self, root_dir, kernel_name):
+    def __init__(self, root_dir, bin_name, kernel_name):
         self.root_dir = root_dir
         self.kernel_name = kernel_name
 
-        rep_filename = f"{root_dir}/_x/reports/{kernel_name}/hls_reports/{kernel_name}_csynth.rpt"
+        rep_filename = f"{root_dir}/_x/reports/{bin_name}/hls_reports/{kernel_name}_csynth.rpt"
         f = open(rep_filename) 
 
         txt = f.read()
