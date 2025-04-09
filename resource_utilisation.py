@@ -76,14 +76,7 @@ from types import SimpleNamespace
 
 class ResourceUtilisationLinked:
     def __init__(self, rep_filename):
-        #self.util = ""
-        #self.avail = ""
-        #self.total = ""
-       
-        #data = '{"name": "John Smith", "hometown": {"name": "New York", "id": 123}}'
-        ## Parse JSON into an object with attributes corresponding to dict keys.
-        #x = json.loads(data, object_hook=lambda d: SimpleNamespace(**d))
-        #print(x.name, x.hometown.name, x.hometown.id)
+        self.rep_filename=rep_filename 
 
         with open(rep_filename) as f:
             self.data = json.load(f, object_hook=lambda data: SimpleNamespace(**data))
@@ -113,17 +106,71 @@ class ResourceUtilisationLinked:
                         "REG": self.total["REG"] / self.avail["REG"] * 100,
                         "BRAM": self.total["BRAM"] / self.avail["BRAM"] * 100,
                         "URAM": self.total["URAM"] / self.avail["URAM"] * 100,
-                        "DSP":self.total["DSP"] / self.avail["DSP"] * 100,
+                        "DSP":self.total["DSP"] / self.avail["DSP"] * 100
                     }
    
-    def get_resource_utilisation(self, csv=False, header=False):
+    def get_resource_utilisation(self, csv=False):
+        cs=f"{self.rep_filename},"
         if csv:
-            if header:
-                for resource, value in self.util.items():
-                    print(f"{resource},", end="") # dont add new line
             for resource, value in self.util.items():
-               print(f"{value},", end="")
-            return
+               cs=f"{cs}{value},"
+            cs=cs.strip(",")
+            return cs
         return self.util
 
- 
+    def get_header(self):
+        headers="bitstream,"
+        for resource, value in self.avail.items():
+            headers=f"{headers}{resource},"
+        return headers.strip(",")
+
+class ResourceUtilisationLinkedSingleKernel:
+    def __init__(self, rep_filename):
+        self.rep_filename=rep_filename 
+
+        with open(rep_filename) as f:
+            self.data = json.load(f, object_hook=lambda data: SimpleNamespace(**data))
+            #print(d.kernels[0].compute_units[0].actual_resources.)
+
+        self.avail = { 
+                        "LUT": int(self.data.user_budget.supply_resources.LUT),
+                        "LUTAsMem": int(self.data.user_budget.supply_resources.LUTAsMem),
+                        "REG": int(self.data.user_budget.supply_resources.REG),
+                        "BRAM": int(self.data.user_budget.supply_resources.BRAM),
+                        "URAM": int(self.data.user_budget.supply_resources.URAM),
+                        "DSP": int(self.data.user_budget.supply_resources.DSP)
+                     }
+
+        self.total = { 
+                        "LUT": int(self.data.kernels[0].compute_units[0].actual_resources.LUT),
+                        "LUTAsMem": int(self.data.kernels[0].compute_units[0].actual_resources.LUTAsMem),
+                        "REG": int(self.data.kernels[0].compute_units[0].actual_resources.REG),
+                        "BRAM": int(self.data.kernels[0].compute_units[0].actual_resources.BRAM),
+                        "URAM": int(self.data.kernels[0].compute_units[0].actual_resources.URAM),
+                        "DSP": int(self.data.kernels[0].compute_units[0].actual_resources.DSP)
+                     }
+
+        self.util = {
+                        "LUT": self.total["LUT"] / self.avail["LUT"] * 100,
+                        "LUTAsMem": self.total["LUTAsMem"] / self.avail["LUTAsMem"] * 100,
+                        "REG": self.total["REG"] / self.avail["REG"] * 100,
+                        "BRAM": self.total["BRAM"] / self.avail["BRAM"] * 100,
+                        "URAM": self.total["URAM"] / self.avail["URAM"] * 100,
+                        "DSP":self.total["DSP"] / self.avail["DSP"] * 100
+                    }
+   
+    def get_resource_utilisation(self, csv=False):
+        cs=f"{self.rep_filename},"
+        if csv:
+            for resource, value in self.util.items():
+               cs=f"{cs}{value},"
+            cs=cs.strip(",")
+            return cs
+        return self.util
+
+    def get_header(self):
+        headers="bitstream,"
+        for resource, value in self.avail.items():
+            headers=f"{headers}{resource},"
+        return headers.strip(",")
+                
