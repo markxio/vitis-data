@@ -173,4 +173,98 @@ class ResourceUtilisationLinkedSingleKernel:
         for resource, value in self.avail.items():
             headers=f"{headers}{resource},"
         return headers.strip(",")
-                
+               
+class ModuleUtilisationEstimate:
+    def __init__(self, rep_filename):
+        self.rep_filename = rep_filename
+
+        f = open(rep_filename) 
+        txt = f.read()
+        
+        sep = "\s*\|\s*"
+        vals_pattern = "(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)"
+        
+        tab_pattern = f"Instance\s*\|\s*Module\s*\|\s*BRAM_18K\s*\|\s*DSP\s*\|\s*FF\s*\|\s*LUT\s*\|\s*URAM\|[\S\s]+Total\s*\|\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)\s*\|\s*(\d+)[\S\s]+\* DSP"
+        match_obj = re.search(tab_pattern, txt, flags=re.DOTALL)
+        tab = match_obj.group(0)
+
+        self.totals = {'bram': int(match_obj.group(1)),
+                'dsp': int(match_obj.group(2)),
+                'ff': int(match_obj.group(3)),
+                'lut': int(match_obj.group(4)),
+                'uram': int(match_obj.group(5))
+                }
+        
+        #control_pattern = f"control_s_axi{sep}{vals_pattern}"
+        #match_obj = re.search(control_pattern, tab, flags=re.DOTALL)
+
+        #self.control = {'bram': int(match_obj.group(1)),
+        #        'dsp': int(match_obj.group(2)),
+        #        'ff': int(match_obj.group(3)),
+        #        'lut': int(match_obj.group(4)),
+        #        'uram': int(match_obj.group(5))
+        #        }
+
+        main_pattern = f"main_compute_loop{sep}{vals_pattern}"
+        #main_pattern = f"do_compute{sep}{vals_pattern}"
+        match_obj = re.search(main_pattern, tab, flags=re.DOTALL)
+
+        self.main_compute = {'bram': int(match_obj.group(1)),
+                'dsp': int(match_obj.group(2)),
+                'ff': int(match_obj.group(3)),
+                'lut': int(match_obj.group(4)),
+                'uram': int(match_obj.group(5))
+                }
+
+        #result_pattern = f"result_port_m_axi{sep}{vals_pattern}"
+        #match_obj = re.search(result_pattern, tab, flags=re.DOTALL)
+
+        #self.result = {'bram': int(match_obj.group(1)),
+        #        'dsp': int(match_obj.group(2)),
+        #        'ff': int(match_obj.group(3)),
+        #        'lut': int(match_obj.group(4)),
+        #        'uram': int(match_obj.group(5))
+        #        }
+
+        #val1_pattern = f"val1_port_m_axi{sep}{vals_pattern}"
+        #match_obj = re.search(val1_pattern, tab, flags=re.DOTALL)
+
+        #self.val1 = {'bram': int(match_obj.group(1)),
+        #        'dsp': int(match_obj.group(2)),
+        #        'ff': int(match_obj.group(3)),
+        #        'lut': int(match_obj.group(4)),
+        #        'uram': int(match_obj.group(5))
+        #        }
+
+        #val2_pattern = f"val2_port_m_axi{sep}{vals_pattern}"
+        #match_obj = re.search(val2_pattern, tab, flags=re.DOTALL)
+
+        #self.val2 = {'bram': int(match_obj.group(1)),
+        #        'dsp': int(match_obj.group(2)),
+        #        'ff': int(match_obj.group(3)),
+        #        'lut': int(match_obj.group(4)),
+        #        'uram': int(match_obj.group(5))
+        #        }
+
+        self.util = {'bram': (self.main_compute['bram'] / self.totals['bram'] * 100) if self.totals['bram'] > 0 else 0.0,
+                 'dsp': (self.main_compute['dsp'] / self.totals['dsp'] * 100) if self.totals['dsp'] > 0 else 0.0,
+                 'ff': (self.main_compute['ff'] / self.totals['ff'] * 100) if self.totals['ff'] > 0 else 0.0,
+                 'lut': (self.main_compute['lut'] / self.totals['lut'] * 100) if self.totals['lut'] > 0 else 0.0,
+                 'uram': (self.main_compute['uram'] / self.totals['uram'] * 100) if self.totals['uram'] > 0 else 0.0
+                  }
+
+    def get_resource_utilisation(self, csv=False):
+        cs=f"{self.rep_filename},"
+        if csv:
+            for resource, value in self.util.items():
+               cs=f"{cs}{value},"
+            cs=cs.strip(",")
+            return cs
+        return self.util
+
+    def get_header(self):
+        headers="bitstream,"
+        for resource, value in self.avail.items():
+            headers=f"{headers}{resource},"
+        return headers.strip(",")
+
